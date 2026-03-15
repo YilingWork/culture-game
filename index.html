@@ -7,118 +7,163 @@
     <style>
         :root {
             --primary: #2c3e50; --clan: #e67e22; --adhoc: #9b59b6; --market: #e74c3c; --hierarchy: #34495e;
-            --success: #2ecc71; --error: #e74c3c;
+            --success: #2ecc71; --error: #e74c3c; --accent: #3498db;
         }
         body { 
             font-family: "Microsoft JhengHei", sans-serif; 
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: #f0f2f5;
             display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; margin: 0; overflow-x: hidden;
+            min-height: 100vh; margin: 0;
         }
         #game-container { 
-            background: rgba(255, 255, 255, 0.95); width: 95%; max-width: 650px; 
-            padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-            text-align: center; position: relative; transition: all 0.3s ease;
+            background: white; width: 95%; max-width: 600px; 
+            padding: 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            text-align: center; position: relative;
         }
-        .page { display: none; animation: fadeIn 0.5s ease; }
+        .page { display: none; animation: fadeIn 0.4s ease-out; }
         .active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-        /* 頂部裝飾 */
-        .header-img { width: 100%; height: 180px; object-fit: cover; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .img-container {
+            width: 100%; height: 200px; border-radius: 12px; margin-bottom: 20px;
+            background: linear-gradient(45deg, #eee, #ccc);
+            overflow: hidden; position: relative;
+        }
+        .header-img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s; }
         
-        h1 { color: var(--primary); font-size: 28px; margin-bottom: 10px; }
-        .progress-bar { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        h1 { color: var(--primary); font-size: 26px; margin: 10px 0; }
+        .progress-bar { width: 100%; height: 6px; background: #eee; border-radius: 3px; margin-bottom: 20px; }
         .progress-inner { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
 
-        /* 題目卡片 */
-        .card { background: white; border-radius: 15px; padding: 25px; text-align: left; border: 1px solid #eee; margin-bottom: 25px; line-height: 1.8; }
-        .card strong { color: var(--primary); font-size: 20px; border-bottom: 3px solid #3498db; margin-bottom: 10px; display: inline-block; }
+        .card { 
+            background: #fdfdfd; border-radius: 12px; padding: 25px; 
+            text-align: left; border: 1px solid #eee; margin-bottom: 25px; 
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .card strong { color: var(--primary); font-size: 22px; display: block; margin-bottom: 12px; border-left: 4px solid var(--accent); padding-left: 10px; }
+        .card p { font-size: 16px; line-height: 1.6; color: #444; margin: 0; }
 
-        /* 選項按鈕 */
         .options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .btn { 
-            padding: 15px; border: none; border-radius: 12px; cursor: pointer; 
-            font-size: 16px; font-weight: bold; color: white; transition: 0.3s;
+            padding: 16px; border: none; border-radius: 12px; cursor: pointer; 
+            font-size: 16px; font-weight: bold; color: white; transition: 0.2s;
             box-shadow: 0 4px 0 rgba(0,0,0,0.1);
         }
-        .btn:active { transform: translateY(3px); box-shadow: none; }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 6px 0 rgba(0,0,0,0.1); }
+        .btn:active { transform: translateY(2px); box-shadow: none; }
         .btn-hierarchy { background: var(--hierarchy); }
         .btn-clan { background: var(--clan); }
         .btn-adhoc { background: var(--adhoc); }
         .btn-market { background: var(--market); }
-        .btn-start { background: #2ecc71; padding: 20px 50px; font-size: 20px; width: 100%; }
+        .btn-start { background: var(--success); width: 100%; font-size: 20px; }
 
-        /* 結果頁 */
-        .score-circle { 
-            width: 150px; height: 150px; border-radius: 50%; border: 10px solid #eee;
-            margin: 20px auto; display: flex; align-items: center; justify-content: center;
-            font-size: 40px; font-weight: bold; color: var(--primary);
-        }
-        
-        /* 音樂切換 */
-        .audio-toggle { position: absolute; top: 15px; right: 20px; cursor: pointer; font-size: 24px; opacity: 0.6; }
-        .audio-toggle:hover { opacity: 1; }
+        #feedback { margin-top: 20px; font-size: 18px; font-weight: bold; min-height: 28px; }
+        .audio-btn { position: absolute; top: 15px; right: 20px; cursor: pointer; font-size: 20px; border: 1px solid #ddd; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: white; z-index: 10; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div class="audio-toggle" onclick="toggleMusic()" id="music-icon">🔇</div>
+    <div class="audio-btn" onclick="toggleMusic()" id="music-icon">🔇</div>
     
     <div id="start-page" class="page active">
-        <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80" class="header-img" alt="Welcome">
+        <div class="img-container">
+            <img src="https://picsum.photos/id/180/800/400" class="header-img">
+        </div>
         <h1>組織文化：王國冒險</h1>
-        <p>你即將進入 10 個不同的組織，<br>請根據他們的傳承故事與儀式，判斷其文化類型。</p>
-        <button class="btn btn-start" onclick="startGame()">踏上征途</button>
+        <p style="color: #666; margin-bottom: 25px;">你將造訪 10 個風格迥異的組織，<br>請運用你的專業直覺，判斷它們的文化類型。</p>
+        <button class="btn btn-start" onclick="startGame()">開始探索</button>
     </div>
 
     <div id="quiz-page" class="page">
         <div class="progress-bar"><div class="progress-inner" id="progress-bar"></div></div>
-        <img id="q-img" src="" class="header-img">
+        <div class="img-container" id="q-img-box">
+            <img id="q-img" src="" class="header-img">
+        </div>
         <div class="card" id="question-card"></div>
         <div class="options">
             <button class="btn btn-hierarchy" onclick="handleAnswer('科層體制')">🏢 科層體制型</button>
             <button class="btn btn-clan" onclick="handleAnswer('宗族')">👨‍👩‍👧‍👦 宗族型</button>
             <button class="btn btn-adhoc" onclick="handleAnswer('創業家')">🚀 創業家型</button>
-            <button class="btn btn-market" onclick="handleAnswer('💰')">🎯 市場型</button>
+            <button class="btn btn-market" onclick="handleAnswer('市場')">🎯 市場型</button>
         </div>
-        <div id="feedback" style="margin-top: 20px; font-size: 18px; font-weight: bold;"></div>
+        <div id="feedback"></div>
     </div>
 
     <div id="result-page" class="page">
-        <h1>冒險結束！</h1>
-        <div class="score-circle" id="final-pct">0%</div>
-        <p id="comment" style="font-size: 18px; color: #666;"></p>
-        <button class="btn btn-start" onclick="location.reload()">重新冒險</button>
+        <h1>探索完成</h1>
+        <div id="score-text" style="font-size: 72px; font-weight: bold; color: var(--accent); margin: 20px 0;">0%</div>
+        <p id="comment" style="font-size: 18px; line-height: 1.5; margin-bottom: 30px; color: #444;"></p>
+        <button class="btn btn-start" onclick="location.reload()">重新探索 (題目隨機洗牌)</button>
     </div>
 </div>
 
 <script>
-    const questions = [
-        { n: "誠信檔案局", d: "【科層】強調正式化、規則與標準作業程序 [cite: 88, 93]。這裡的所有任務都有清楚界定，新人必須簽署厚重的規範手冊 [cite: 94]。", img: "https://images.unsplash.com/photo-1506784919140-50cf75438833?auto=format&fit=crop&w=600&q=80", a: "科層體制" },
-        { n: "暖心茶坊", d: "【宗族】尊重傳統、高忠誠度與團隊認同感 [cite: 119, 122]。每週舉行的家庭聚餐儀式，強化了成員間如家人般的互賴關係 [cite: 31, 119]。", img: "https://images.unsplash.com/photo-1544333346-64e4fe183b63?auto=format&fit=crop&w=600&q=80", a: "宗族" },
-        { n: "閃電開發中心", d: "【創業家】強調高度冒險、動態與創造性 [cite: 120, 123]。鼓勵成員自由實驗，並在失敗慶祝會中分享從錯誤中學習的價值 [cite: 135]。", img: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80", a: "創業家" },
-        { n: "巔峰銷售團隊", d: "【市場】以追求利潤與可衡量目標為職志 [cite: 121, 124]。強調市場競爭，成交的『入袋』術語與金龍大鐘的儀式，不斷強化業績至上的價值 [cite: 37, 46]。", img: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80", a: "💰" },
-        { n: "永恆航運", d: "【宗族】強調高度的社會互動與個人承諾 。透過船長與水手的傳奇故事，將組織的穩定與支持作用傳達給每一位新成員 [cite: 9, 14]。", img: "https://images.unsplash.com/photo-1524522173746-f628baad3644?auto=format&fit=crop&w=600&q=80", a: "宗族" },
-        { n: "法規監察院", d: "【科層】重視權力與職責的清晰界定，管理者如同規則的協調者 [cite: 94]。透過嚴謹的服飾準則與宣誓儀式，維護組織的正式性 [cite: 49, 153]。", img: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=600&q=80", a: "科層體制" },
-        { n: "幻夢創意工場", d: "【創業家】強調創造變革而非僅是因應變革 。提供『15%自由時間』術語，讓成員能彈性地追求對組織成長有益的意圖 [cite: 98, 120]。", img: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=600&q=80", a: "創業家" },
-        { n: "金幣投資行", d: "【市場】成員間是基於績效的契約關係，利潤掛帥瀰漫整個組織 [cite: 121, 128]。每月英雄榜儀式是用來增強績效評估與獎酬的結果 [cite: 138, 151]。", img: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&w=600&q=80", a: "💰" },
-        { n: "極限科技", d: "【創業家】組織績效來自提供新穎獨特的產品 。透過駭客馬拉松等活動型態，增強員工的冒險精神與創造力 [cite: 50, 123]。", img: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=600&q=80", a: "創業家" },
-        { n: "標準財團", d: "【科層】強調內部注意力的焦點與穩定性 。透過定期的集會儀式與標語符號，持續地對組織內部的文化給予增強 [cite: 154]。", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80", a: "科層體制" }
+    const rawData = [
+        { n: "誠信檔案局", d: "強調正式化與標準作業程序，所有的任務、職責與職權都有清楚的界定。", a: "科層體制", img: "20" },
+        { n: "暖心茶坊", d: "尊重傳統、強調團隊與自我管理，成員間具有強烈的組織認同感與互賴感。", a: "宗族", img: "225" },
+        { n: "閃電開發", d: "強調高度冒險、動態性與創造性，不只是因應變革，更強調創造變革。", a: "創業家", img: "2" },
+        { n: "巔峰銷售", d: "以追求可衡量與所企圖的目標為職志，強調市場競爭與利潤掛帥。", a: "市場", img: "24" },
+        { n: "永恆航運", d: "展現高忠誠度與個人承諾，成員以成為組織的一員為榮，重視長期的回饋。", a: "宗族", img: "11" },
+        { n: "法規院", d: "偏向透過組織層級進行協調，管理者視自己為書面規則的協調者與執行者。", a: "科層體制", img: "1073" },
+        { n: "幻夢工場", d: "為了組織成長，給予成員極大的彈性與自由，鼓勵提供新穎、獨特的產品。", a: "創業家", img: "445" },
+        { n: "金幣銀行", d: "成員間是一種契約關係，著重利潤率、市場占有率與銷售成長率等財務指標。", a: "市場", img: "565" },
+        { n: "極限科技", d: "環境充滿不確定性，組織文化瀰漫著高度的冒險精神與對變革的渴望。", a: "創業家", img: "1" },
+        { n: "標準財團", d: "將注意力焦點集中在組織內部，強調規則、標準作業程序與正式的控制。", a: "科層體制", img: "1022" }
     ];
 
+    let questions = [];
     let currentIdx = 0, score = 0, musicOn = false;
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    function playSound(freq, duration, type) {
+    function startGame() {
+        questions = [...rawData].sort(() => Math.random() - 0.5);
+        document.getElementById('start-page').style.display = 'none';
+        document.getElementById('quiz-page').style.display = 'block';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = questions[currentIdx];
+        const imgElement = document.getElementById('q-img');
+        imgElement.style.opacity = '0';
+        setTimeout(() => {
+            imgElement.src = `https://picsum.photos/id/${q.img}/800/400`;
+            imgElement.style.opacity = '1';
+        }, 100);
+        
+        document.getElementById('progress-bar').style.width = `${((currentIdx + 1) / 10) * 100}%`;
+        document.getElementById('question-card').innerHTML = `<strong>${q.n}</strong><p>${q.d}</p>`;
+        document.getElementById('feedback').innerText = "";
+    }
+
+    function handleAnswer(choice) {
+        const correct = questions[currentIdx].a;
+        const feedback = document.getElementById('feedback');
+        if (choice === correct) {
+            score++;
+            beep(880, 0.2); 
+            feedback.innerHTML = "<span style='color:var(--success)'>✨ 答對了！</span>";
+        } else {
+            beep(220, 0.3);
+            feedback.innerHTML = `<span style='color:var(--error)'>❌ 答錯了，這是「${correct}型」</span>`;
+        }
+
+        setTimeout(() => {
+            currentIdx++;
+            if (currentIdx < 10) loadQuestion();
+            else showResult();
+        }, 1000);
+    }
+
+    function beep(freq, duration) {
         if (!musicOn) return;
         const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.type = type; osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        const g = audioCtx.createGain();
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
         osc.start(); osc.stop(audioCtx.currentTime + duration);
     }
 
@@ -128,46 +173,12 @@
         if (musicOn && audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    function startGame() {
-        document.getElementById('start-page').style.display = 'none';
-        document.getElementById('quiz-page').style.display = 'block';
-        loadQuestion();
-    }
-
-    function loadQuestion() {
-        const q = questions[currentIdx];
-        document.getElementById('q-img').src = q.img;
-        document.getElementById('progress-bar').style.width = `${((currentIdx + 1) / 10) * 100}%`;
-        document.getElementById('question-card').innerHTML = `<strong>${q.n}</strong><br>${q.d}`;
-        document.getElementById('feedback').innerText = "";
-    }
-
-    function handleAnswer(choice) {
-        const correct = questions[currentIdx].a;
-        if (choice === correct) {
-            score++;
-            playSound(880, 0.3, 'sine'); // 答對鈴聲
-            document.getElementById('feedback').innerHTML = "<span style='color:var(--success)'>完美配對！🌟</span>";
-        } else {
-            playSound(220, 0.4, 'triangle'); // 答錯低音
-            document.getElementById('feedback').innerHTML = `<span style='color:var(--error)'>文化偏差！正確應是：${correct === '💰' ? '市場' : correct}型</span>`;
-        }
-
-        setTimeout(() => {
-            currentIdx++;
-            if (currentIdx < questions.length) loadQuestion();
-            else showResult();
-        }, 1200);
-    }
-
     function showResult() {
         document.getElementById('quiz-page').style.display = 'none';
         document.getElementById('result-page').style.display = 'block';
-        const pct = Math.round((score / 10) * 100);
-        document.getElementById('final-pct').innerText = `${pct}%`;
-        let msg = pct === 100 ? "大師！你完全掌握了組織文化的內涵 [cite: 47]！" : 
-                  pct >= 70 ? "很棒！你對各種文化類型的區分非常清晰 [cite: 92]。" : "建議再回去閱讀關於社會化與傳承的章節 [cite: 130, 139]。";
-        document.getElementById('comment').innerText = msg;
+        const pct = (score / 10) * 100;
+        document.getElementById('score-text').innerText = `${pct}%`;
+        document.getElementById('comment').innerText = pct === 100 ? "卓越！你已具備識別組織文化的核心能力。" : pct >= 70 ? "很棒！你對各類組織文化的特質已有清晰的認知。" : "建議再次檢視講義中關於不同文化類型的核心定義。";
     }
 </script>
 </body>

@@ -3,183 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>組織文化：王國冒險</title>
+    <title>組織文化：王國配對挑戰</title>
     <style>
         :root {
-            --primary: #2c3e50; --clan: #e67e22; --adhoc: #9b59b6; --market: #e74c3c; --hierarchy: #34495e;
-            --success: #2ecc71; --error: #e74c3c; --accent: #3498db;
+            --primary: #2c3e50; --accent: #3498db; --success: #2ecc71; --error: #e74c3c; --bg: #f8f9fa;
         }
-        body { 
-            font-family: "Microsoft JhengHei", sans-serif; 
-            background: #f0f2f5;
-            display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; margin: 0;
-        }
-        #game-container { 
-            background: white; width: 95%; max-width: 600px; 
-            padding: 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-            text-align: center; position: relative;
-        }
-        .page { display: none; animation: fadeIn 0.4s ease-out; }
-        .active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        header { text-align: center; border-bottom: 2px solid #eee; margin-bottom: 30px; padding-bottom: 10px; }
+        h1 { color: var(--primary); margin: 0; }
+        p.subtitle { color: #666; margin-top: 5px; }
 
-        .img-container {
-            width: 100%; height: 200px; border-radius: 12px; margin-bottom: 20px;
-            background: linear-gradient(45deg, #eee, #ccc);
-            overflow: hidden; position: relative;
-        }
-        .header-img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s; }
+        /* 表格樣式 */
+        .matching-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .matching-table th { background: #f1f3f5; padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; }
+        .matching-table td { padding: 15px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        .org-name { font-weight: bold; color: var(--accent); width: 150px; }
+        .org-desc { font-size: 15px; line-height: 1.5; padding-right: 20px; }
         
-        h1 { color: var(--primary); font-size: 26px; margin: 10px 0; }
-        .progress-bar { width: 100%; height: 6px; background: #eee; border-radius: 3px; margin-bottom: 20px; }
-        .progress-inner { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
-
-        .card { 
-            background: #fdfdfd; border-radius: 12px; padding: 25px; 
-            text-align: left; border: 1px solid #eee; margin-bottom: 25px; 
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        /* 下拉選單樣式 */
+        select { 
+            padding: 10px; border-radius: 6px; border: 2px solid #ddd; background: white; 
+            font-size: 15px; width: 100%; cursor: pointer; transition: 0.2s;
         }
-        .card strong { color: var(--primary); font-size: 22px; display: block; margin-bottom: 12px; border-left: 4px solid var(--accent); padding-left: 10px; }
-        .card p { font-size: 16px; line-height: 1.6; color: #444; margin: 0; }
-
-        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .btn { 
-            padding: 16px; border: none; border-radius: 12px; cursor: pointer; 
-            font-size: 16px; font-weight: bold; color: white; transition: 0.2s;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        select:focus { border-color: var(--accent); outline: none; }
+        
+        .btn-submit { 
+            display: block; width: 100%; padding: 18px; background: var(--primary); color: white; 
+            border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s;
         }
-        .btn:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 6px 0 rgba(0,0,0,0.1); }
-        .btn:active { transform: translateY(2px); box-shadow: none; }
-        .btn-hierarchy { background: var(--hierarchy); }
-        .btn-clan { background: var(--clan); }
-        .btn-adhoc { background: var(--adhoc); }
-        .btn-market { background: var(--market); }
-        .btn-start { background: var(--success); width: 100%; font-size: 20px; }
+        .btn-submit:hover { background: var(--accent); transform: translateY(-2px); }
 
-        #feedback { margin-top: 20px; font-size: 18px; font-weight: bold; min-height: 28px; }
-        .audio-btn { position: absolute; top: 15px; right: 20px; cursor: pointer; font-size: 20px; border: 1px solid #ddd; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: white; z-index: 10; }
+        /* 結果頁面 */
+        #result-modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content { background: white; padding: 40px; border-radius: 20px; text-align: center; max-width: 400px; width: 90%; }
+        .score-text { font-size: 64px; font-weight: bold; color: var(--accent); margin-bottom: 10px; }
+        
+        .correct-row { background-color: rgba(46, 204, 113, 0.1); }
+        .wrong-row { background-color: rgba(231, 76, 60, 0.1); }
+        .feedback-label { font-size: 12px; font-weight: bold; display: block; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <div class="audio-btn" onclick="toggleMusic()" id="music-icon">🔇</div>
-    
-    <div id="start-page" class="page active">
-        <div class="img-container">
-            <img src="https://picsum.photos/id/180/800/400" class="header-img">
-        </div>
-        <h1>組織文化：王國冒險</h1>
-        <p style="color: #666; margin-bottom: 25px;">你將造訪 10 個風格迥異的組織，<br>請運用你的專業直覺，判斷它們的文化類型。</p>
-        <button class="btn btn-start" onclick="startGame()">開始探索</button>
-    </div>
+<div class="container">
+    <header>
+        <h1>🏢 組織文化配對挑戰</h1>
+        <p class="subtitle">請閱讀各組織的傳承描述，並選擇最符合的文化類型。</p>
+    </header>
 
-    <div id="quiz-page" class="page">
-        <div class="progress-bar"><div class="progress-inner" id="progress-bar"></div></div>
-        <div class="img-container" id="q-img-box">
-            <img id="q-img" src="" class="header-img">
-        </div>
-        <div class="card" id="question-card"></div>
-        <div class="options">
-            <button class="btn btn-hierarchy" onclick="handleAnswer('科層體制')">🏢 科層體制型</button>
-            <button class="btn btn-clan" onclick="handleAnswer('宗族')">👨‍👩‍👧‍👦 宗族型</button>
-            <button class="btn btn-adhoc" onclick="handleAnswer('創業家')">🚀 創業家型</button>
-            <button class="btn btn-market" onclick="handleAnswer('市場')">🎯 市場型</button>
-        </div>
-        <div id="feedback"></div>
-    </div>
+    <table class="matching-table">
+        <thead>
+            <tr>
+                <th>組織名稱</th>
+                <th>文化特質描述</th>
+                <th style="width: 180px;">選擇文化類型</th>
+            </tr>
+        </thead>
+        <tbody id="quiz-body">
+            </tbody>
+    </table>
 
-    <div id="result-page" class="page">
-        <h1>探索完成</h1>
-        <div id="score-text" style="font-size: 72px; font-weight: bold; color: var(--accent); margin: 20px 0;">0%</div>
-        <p id="comment" style="font-size: 18px; line-height: 1.5; margin-bottom: 30px; color: #444;"></p>
-        <button class="btn btn-start" onclick="location.reload()">重新探索 (題目隨機洗牌)</button>
+    <button class="btn-submit" onclick="gradeQuiz()">提交所有配對結果</button>
+</div>
+
+<div id="result-modal">
+    <div class="modal-content">
+        <h2>測驗完成！</h2>
+        <div class="score-text" id="final-score">0%</div>
+        <p id="final-comment"></p>
+        <button class="btn-submit" onclick="location.reload()">重新挑戰</button>
     </div>
 </div>
 
 <script>
-    const rawData = [
-        { n: "誠信檔案局", d: "強調正式化與標準作業程序，所有的任務、職責與職權都有清楚的界定。", a: "科層體制", img: "20" },
-        { n: "暖心茶坊", d: "尊重傳統、強調團隊與自我管理，成員間具有強烈的組織認同感與互賴感。", a: "宗族", img: "225" },
-        { n: "閃電開發", d: "強調高度冒險、動態性與創造性，不只是因應變革，更強調創造變革。", a: "創業家", img: "2" },
-        { n: "巔峰銷售", d: "以追求可衡量與所企圖的目標為職志，強調市場競爭與利潤掛帥。", a: "市場", img: "24" },
-        { n: "永恆航運", d: "展現高忠誠度與個人承諾，成員以成為組織的一員為榮，重視長期的回饋。", a: "宗族", img: "11" },
-        { n: "法規院", d: "偏向透過組織層級進行協調，管理者視自己為書面規則的協調者與執行者。", a: "科層體制", img: "1073" },
-        { n: "幻夢工場", d: "為了組織成長，給予成員極大的彈性與自由，鼓勵提供新穎、獨特的產品。", a: "創業家", img: "445" },
-        { n: "金幣銀行", d: "成員間是一種契約關係，著重利潤率、市場占有率與銷售成長率等財務指標。", a: "市場", img: "565" },
-        { n: "極限科技", d: "環境充滿不確定性，組織文化瀰漫著高度的冒險精神與對變革的渴望。", a: "創業家", img: "1" },
-        { n: "標準財團", d: "將注意力焦點集中在組織內部，強調規則、標準作業程序與正式的控制。", a: "科層體制", img: "1022" }
+    const orgs = [
+        { n: "誠信檔案局", d: "強調正式化、標準作業程序與層級協調，任務與職權界定清晰。", a: "科層體制" },
+        { n: "暖心茶坊", d: "尊重傳統、高度互賴，成員視組織為大家庭並具有強烈認同感。", a: "宗族" },
+        { n: "閃電開發", d: "強調冒險、動態與創造性，致力於創造變革而非僅是因應變革。", a: "創業家" },
+        { n: "巔峰銷售", d: "利潤掛帥、追求可衡量目標，瀰漫著強烈的市場競爭氛圍。", a: "市場" },
+        { n: "永恆航運", d: "重視成員的高度付出與長期回饋，具有極高的社會互動與承諾度。", a: "宗族" },
+        { n: "法規院", d: "管理者將自己視為規則與標準的協調者，注意焦點集中在內部穩定。", a: "科層體制" },
+        { n: "幻夢工場", d: "鼓勵成員擁有彈性與自由，透過提供新穎獨特的產品來達成績效。", a: "創業家" },
+        { n: "金幣銀行", d: "成員間屬於契約關係，專注於投資報酬率與銷售成長等財務指標。", a: "市場" },
+        { n: "極限科技", d: "在中小型組織中常見，創辦人具冒險精神，對變革持正面報酬態度。", a: "創業家" },
+        { n: "標準財團", d: "重視正式的控制導向，所有的行為都需符合標準作業程序與規範。", a: "科層體制" }
     ];
 
-    let questions = [];
-    let currentIdx = 0, score = 0, musicOn = false;
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const types = ["-- 請選擇 --", "科層體制", "宗族", "創業家", "市場"];
 
-    function startGame() {
-        questions = [...rawData].sort(() => Math.random() - 0.5);
-        document.getElementById('start-page').style.display = 'none';
-        document.getElementById('quiz-page').style.display = 'block';
-        loadQuestion();
-    }
+    // 初始化表格
+    const quizBody = document.getElementById('quiz-body');
+    orgs.forEach((org, index) => {
+        const row = document.createElement('tr');
+        row.id = `row-${index}`;
+        row.innerHTML = `
+            <td class="org-name">${org.n}</td>
+            <td class="org-desc">${org.d}</td>
+            <td>
+                <select id="select-${index}">
+                    ${types.map(t => `<option value="${t}">${t}</option>`).join('')}
+                </select>
+                <span id="feedback-${index}" class="feedback-label"></span>
+            </td>
+        `;
+        quizBody.appendChild(row);
+    });
 
-    function loadQuestion() {
-        const q = questions[currentIdx];
-        const imgElement = document.getElementById('q-img');
-        imgElement.style.opacity = '0';
-        setTimeout(() => {
-            imgElement.src = `https://picsum.photos/id/${q.img}/800/400`;
-            imgElement.style.opacity = '1';
-        }, 100);
-        
-        document.getElementById('progress-bar').style.width = `${((currentIdx + 1) / 10) * 100}%`;
-        document.getElementById('question-card').innerHTML = `<strong>${q.n}</strong><p>${q.d}</p>`;
-        document.getElementById('feedback').innerText = "";
-    }
+    function gradeQuiz() {
+        let score = 0;
+        let unanswered = false;
 
-    function handleAnswer(choice) {
-        const correct = questions[currentIdx].a;
-        const feedback = document.getElementById('feedback');
-        if (choice === correct) {
-            score++;
-            beep(880, 0.2); 
-            feedback.innerHTML = "<span style='color:var(--success)'>✨ 答對了！</span>";
-        } else {
-            beep(220, 0.3);
-            feedback.innerHTML = `<span style='color:var(--error)'>❌ 答錯了，這是「${correct}型」</span>`;
+        orgs.forEach((org, index) => {
+            const select = document.getElementById(`select-${index}`);
+            const row = document.getElementById(`row-${index}`);
+            const feedback = document.getElementById(`feedback-${index}`);
+            
+            if (select.value === "-- 請選擇 --") {
+                unanswered = true;
+                return;
+            }
+
+            if (select.value === org.a) {
+                score++;
+                row.className = "correct-row";
+                feedback.innerText = "✅ 正確";
+                feedback.style.color = "var(--success)";
+            } else {
+                row.className = "wrong-row";
+                feedback.innerText = `❌ 應為：${org.a}型`;
+                feedback.style.color = "var(--error)";
+            }
+            select.disabled = true;
+        });
+
+        if (unanswered) {
+            alert("請完成所有組織的配對後再提交！");
+            return;
         }
 
-        setTimeout(() => {
-            currentIdx++;
-            if (currentIdx < 10) loadQuestion();
-            else showResult();
-        }, 1000);
-    }
-
-    function beep(freq, duration) {
-        if (!musicOn) return;
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        osc.connect(g); g.connect(audioCtx.destination);
-        osc.frequency.value = freq;
-        g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-        osc.start(); osc.stop(audioCtx.currentTime + duration);
-    }
-
-    function toggleMusic() {
-        musicOn = !musicOn;
-        document.getElementById('music-icon').innerText = musicOn ? "🔊" : "🔇";
-        if (musicOn && audioCtx.state === 'suspended') audioCtx.resume();
-    }
-
-    function showResult() {
-        document.getElementById('quiz-page').style.display = 'none';
-        document.getElementById('result-page').style.display = 'block';
-        const pct = (score / 10) * 100;
-        document.getElementById('score-text').innerText = `${pct}%`;
-        document.getElementById('comment').innerText = pct === 100 ? "卓越！你已具備識別組織文化的核心能力。" : pct >= 70 ? "很棒！你對各類組織文化的特質已有清晰的認知。" : "建議再次檢視講義中關於不同文化類型的核心定義。";
+        // 顯示結果
+        const pct = Math.round((score / orgs.length) * 100);
+        document.getElementById('final-score').innerText = `${pct}%`;
+        document.getElementById('final-comment').innerText = pct === 100 ? "大滿貫！你完全理解了四種文化類型的差異。" : "做得好！請對照錯誤的部分再次複習。";
+        document.getElementById('result-modal').style.display = 'flex';
     }
 </script>
+
 </body>
 </html>

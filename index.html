@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>組織文化類型配對挑戰</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+            --bg-color: #ecf0f1;
+        }
+        body { font-family: "Microsoft JhengHei", sans-serif; background-color: var(--bg-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        #game-container { background: white; width: 90%; max-width: 600px; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        h1 { color: var(--primary-color); margin-bottom: 10px; font-size: 24px; }
+        .progress { color: #7f8c8d; margin-bottom: 20px; font-size: 14px; }
+        .card { background: #f9f9f9; border: 2px solid #eee; padding: 20px; border-radius: 10px; margin-bottom: 25px; text-align: left; min-height: 150px; }
+        .card strong { color: var(--accent-color); font-size: 18px; display: block; margin-bottom: 10px; }
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { padding: 12px; border: none; background: var(--primary-color); color: white; border-radius: 8px; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        button:hover { background: var(--accent-color); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        #result-page { display: none; }
+        .score-display { font-size: 48px; font-weight: bold; color: var(--accent-color); margin: 20px 0; }
+        #feedback { margin-top: 15px; font-weight: bold; min-height: 24px; }
+        .restart-btn { background: var(--success-color); margin-top: 20px; width: 100%; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="quiz-page">
+        <h1>🏢 組織文化配對挑戰</h1>
+        <div class="progress" id="progress">第 1 / 10 題</div>
+        <div class="card" id="question-card">
+            </div>
+        <div class="options">
+            <button onclick="checkAnswer('科層體制')">科層體制型</button>
+            <button onclick="checkAnswer('宗族')">宗族型</button>
+            <button onclick="checkAnswer('創業家')">創業家型</button>
+            <button onclick="checkAnswer('市場')">市場型</button>
+        </div>
+        <div id="feedback"></div>
+    </div>
+
+    <div id="result-page">
+        <h1>測驗完成！</h1>
+        <p>您的最終得分率為：</p>
+        <div class="score-display" id="final-score">0%</div>
+        <p id="score-comment"></p>
+        <button class="restart-btn" onclick="restartGame()">再試一次</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { name: "誠信檔案局", desc: "【故事】創辦人要求重新核對三萬份錯誤檔案。【儀式】簽署50頁規範手冊。【符號】紅色標準作業夾。", ans: "科層體制" },
+        { name: "暖心茶坊", desc: "【故事】老闆熬粥照顧生病員工。【儀式】週年慶感恩敬茶。【術語】成員互稱「茶家人」。", ans: "宗族" },
+        { name: "閃電開發中心", desc: "【故事】24小時內推翻舊案成功開發產品。【儀式】失敗慶祝會。【符號】破牆而出的獅子掛畫。", ans: "創業家" },
+        { name: "巔峰銷售團隊", desc: "【故事】守候客戶三三夜成功的神話。【儀式】成交後敲響金龍大鐘。【術語】成交稱為「入袋」。", ans: "市場" },
+        { name: "永恆航運公司", desc: "【故事】船長在風暴中堅持帶領水手平安歸航。【儀式】週末海洋家庭聚餐。【符號】雙手緊握的公司標誌。", ans: "宗族" },
+        { name: "法規監察院", desc: "【故事】稽核員連一塊錢帳目誤差都不放過。【儀式】在宣誓牆前朗讀行為準則。【符號】深藍制服與階級章。", ans: "科層體制" },
+        { name: "幻夢創意工場", desc: "【故事】團隊集體熬夜進行『刻意挑戰』。【儀式】新人在塗鴉牆畫下夢想圖騰。【術語】15% 自由研發時間。", ans: "創業家" },
+        { name: "金幣投資行", desc: "【故事】精準數據分析並快速獲利的傳奇。【儀式】月底頒發英雄榜黃金名片。【術語】ROI 掛帥。", ans: "市場" },
+        { name: "極限科技", desc: "【故事】創辦人獎勵搞砸實驗但發現新材料的員工。【儀式】入職第一週參加駭客馬拉松。【符號】藍色光標。", ans: "創業家" },
+        { name: "標準銀行", desc: "【故事】危機中仍堅守所有行政流程的傳統。【儀式】週一早晨進行流程複誦。【符號】厚重石柱門廳裝潢。", ans: "科層體制" }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+    let canAnswer = true;
+
+    function loadQuestion() {
+        canAnswer = true;
+        document.getElementById('feedback').innerText = "";
+        const q = questions[currentIdx];
+        document.getElementById('progress').innerText = `第 ${currentIdx + 1} / ${questions.length} 題`;
+        document.getElementById('question-card').innerHTML = `<strong>${q.name}</strong>${q.desc}`;
+    }
+
+    function checkAnswer(choice) {
+        if (!canAnswer) return;
+        canAnswer = false;
+
+        const correctAns = questions[currentIdx].ans;
+        const feedbackDiv = document.getElementById('feedback');
+
+        if (choice === correctAns) {
+            score++;
+            feedbackDiv.innerText = "正確！✅";
+            feedbackDiv.style.color = "#27ae60";
+        } else {
+            feedbackDiv.innerText = `錯誤！正確答案是：${correctAns}型 ❌`;
+            feedbackDiv.style.color = "#e74c3c";
+        }
+
+        setTimeout(() => {
+            currentIdx++;
+            if (currentIdx < questions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }, 1200);
+    }
+
+    function showResult() {
+        document.getElementById('quiz-page').style.display = 'none';
+        document.getElementById('result-page').style.display = 'block';
+        const percentage = Math.round((score / questions.length) * 100);
+        document.getElementById('final-score').innerText = `${percentage}%`;
+        
+        let comment = "";
+        if(percentage === 100) comment = "完美！你是組織文化大師！";
+        else if(percentage >= 70) comment = "做得好！你對組織文化有很深的理解。";
+        else comment = "再複習一下講義，加油！";
+        document.getElementById('score-comment').innerText = comment;
+    }
+
+    function restartGame() {
+        currentIdx = 0;
+        score = 0;
+        document.getElementById('quiz-page').style.display = 'block';
+        document.getElementById('result-page').style.display = 'none';
+        loadQuestion();
+    }
+
+    // 初始化第一題
+    loadQuestion();
+</script>
+
+</body>
+</html>
